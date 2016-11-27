@@ -1,0 +1,3 @@
+/bin/ls -a
+/usr/bin/gvim
+exit
