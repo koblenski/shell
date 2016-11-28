@@ -1,7 +1,7 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <iostream.h>
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -12,6 +12,14 @@ struct command_t {
   char *argv[1024];
 };
 
+
+bool is_empty(const char *str) {
+  while (*str != '\0') {
+    if (!isspace(*str)) return false;
+    str++;
+  }
+  return true;
+}
 
 int main (int argc, char *argv[]){
   //variable initialization
@@ -27,7 +35,7 @@ int main (int argc, char *argv[]){
   bool echoLine=0;           //If in batch mode and VERBOSE is set, echoLine=1
   bool execute = 1;          //Set to false if command should no longer be executed
   static bool TRUE=1;
-  static char *PROMPT="koblensk> "; //Prompt to appear for user
+  static char PROMPT[]="koblensk> "; //Prompt to appear for user
 
   //Shell Initialization
 
@@ -37,8 +45,8 @@ int main (int argc, char *argv[]){
   } else if (argc == 2) {
       inputSrc=fopen(argv[1], "r");
       if (inputSrc == NULL) {
-	cout<<endl<<"File not found."<<endl;
-	cout<<"Check your file name and path."<<endl<<endl;
+  puts("\nFile not found.");
+  puts("Check your file name and path.\n");
 	exit(0);
       } //if
       if (getenv("VERBOSE") != NULL) {
@@ -46,9 +54,9 @@ int main (int argc, char *argv[]){
       } //if
 
   } else {
-      cout<<endl<<"Too many arguments for shell command."<<endl;
-      cout<<"To run in batch mode use: shell <fileName>."<<endl<<endl;
-      exit(0);
+    puts("\nToo many arguments for shell command.");
+    puts("To run in batch mode use: shell <filename>.\n");
+    exit(0);
   } //if - else if - else
 
   //Get SHELLPATH
@@ -68,6 +76,7 @@ int main (int argc, char *argv[]){
     commandLine = (char *) malloc(LENGTH*sizeof(char));
     checkEOF=fgets(commandLine, LENGTH, inputSrc);
     printf("Command Line : %s", commandLine);
+    if (is_empty(commandLine)) continue;
     commandLine[strlen(commandLine) - 1] = '\0';
 
     if (checkEOF == NULL){
@@ -75,8 +84,8 @@ int main (int argc, char *argv[]){
       exit(0);
 
     } else if (strlen(commandLine) >= (unsigned)LENGTH-1) {
-        cout<<endl<<"Input exceeds valid command length."<<endl;
-	cout<<"Input must be at most 512 characters."<<endl;
+      puts("\nInput exceeds valid command length.");
+      puts("Input must be at most 512 characters.");
 	while(strlen(fgets(commandLine, LENGTH, inputSrc)) >= (unsigned)LENGTH-1);
 	commandLine[0] = '\n';
     } //else if
@@ -141,8 +150,8 @@ int main (int argc, char *argv[]){
       if (command->argc == 1) {
 	exit(0);
       } else {
-	  cout<<endl<<"exit has too many arguments."<<endl;
-	  cout<<"Type ""exit"" or press Ctrl-D to exit."<<endl<<endl;
+        puts("\nexit has too many arguments.");
+        puts("Type \"exit\" or press Ctrl-D to exit.\n");
 	  execute = 0;
       } //else
     } //if
@@ -204,9 +213,9 @@ int main (int argc, char *argv[]){
 	    i++;
 
 	  } else {
-	      cout<<endl<<"Command Not Found."<<endl;
-	      cout<<"Please check your path and filename."<<endl;
-	      cout<<"Note: programs needing user input cannot be executed with this shell"<<endl<<endl;
+      puts("\nCommand Not Found.");
+	    puts("Please check your path and filename.");
+	    puts("Note: programs needing user input cannot be executed with this shell.\n");
 	      exit(0);
 	  } //else
 
