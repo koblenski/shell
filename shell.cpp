@@ -21,6 +21,14 @@ bool is_empty(const char *str) {
   return true;
 }
 
+void rstrip(char *str) {
+    char *end = str + strlen(str) - 1;
+    while (end > str && isspace(*end)) {
+      *end = '\0';
+      end--;
+    }
+}
+
 int main (int argc, char *argv[]){
   //variable initialization
   struct command_t *command; //Holds parsed command
@@ -68,6 +76,39 @@ int main (int argc, char *argv[]){
       strcpy(shellPath, getenv("SHELLPATH"));
   } //else
 
+    //Find the full pathname for the file and execute command
+    int pathCount = 0;
+
+    if (shellPath != NULL) {
+
+      commandPath[0] = (char *) \
+	  malloc(LENGTH*sizeof(char));
+      char *pathTmp = strtok(shellPath, ":");
+      if (pathTmp) {
+	  strcpy(commandPath[0], pathTmp);
+      } else {
+	  commandPath[0] = NULL;
+	  printf("OOPS\n");
+	  exit(1);
+      }
+
+      while (commandPath[pathCount] != NULL) {
+	pathCount++;
+
+	char *sTmp = strtok(NULL, ":");
+	if (sTmp) {
+	    commandPath[pathCount] = (char *) malloc(256*sizeof(char));
+	    strcpy(commandPath[pathCount], sTmp);
+	} else {
+	    commandPath[pathCount] = NULL;
+	}
+      } //while
+
+      //temp = strlen(commandPath[pathCount-1]) - 1;
+      //commandPath[pathCount-1][temp] = '\0';
+      commandPath[pathCount] = NULL;
+    } //if
+
   //Main Loop
   while (TRUE) {
     printf("%s", PROMPT);
@@ -76,14 +117,15 @@ int main (int argc, char *argv[]){
     commandLine = (char *) malloc(LENGTH*sizeof(char));
     checkEOF=fgets(commandLine, LENGTH, inputSrc);
     printf("Command Line : %s", commandLine);
-    if (is_empty(commandLine)) continue;
-    commandLine[strlen(commandLine) - 1] = '\0';
+    rstrip(commandLine);
 
     if (checkEOF == NULL){
       printf("\n");
       exit(0);
 
-    } else if (strlen(commandLine) >= (unsigned)LENGTH-1) {
+    }
+    if (is_empty(commandLine)) continue;
+    if (strlen(commandLine) >= (unsigned)LENGTH-1) {
       puts("\nInput exceeds valid command length.");
       puts("Input must be at most 512 characters.");
 	while(strlen(fgets(commandLine, LENGTH, inputSrc)) >= (unsigned)LENGTH-1);
@@ -154,39 +196,6 @@ int main (int argc, char *argv[]){
         puts("Type \"exit\" or press Ctrl-D to exit.\n");
 	  execute = 0;
       } //else
-    } //if
-
-    //Find the full pathname for the file and execute command
-    int pathCount = 0;
-
-    if (shellPath != NULL) {
-
-      commandPath[0] = (char *) \
-	  malloc(LENGTH*sizeof(char));
-      char *pathTmp = strtok(shellPath, ":");
-      if (pathTmp) {
-	  strcpy(commandPath[0], pathTmp);
-      } else {
-	  commandPath[0] = NULL;
-	  printf("OOPS\n");
-	  exit(1);
-      }
-
-      while (commandPath[pathCount] != NULL) {
-	pathCount++;
-
-	char *sTmp = strtok(NULL, ":");
-	if (sTmp) {
-	    commandPath[pathCount] = (char *) malloc(256*sizeof(char));
-	    strcpy(commandPath[pathCount], sTmp);
-	} else {
-	    commandPath[pathCount] = NULL;
-	}
-      } //while
-
-      //temp = strlen(commandPath[pathCount-1]) - 1;
-      //commandPath[pathCount-1][temp] = '\0';
-      commandPath[pathCount] = NULL;
     } //if
 
     if (execute) {

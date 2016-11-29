@@ -1,0 +1,194 @@
+.
+..
+batch.txt
+.batch.txt.swp
+.git
+.gitignore
+golden_output.txt
+shell
+shell.cpp
+/bin/ls -a
+cat batch.txt
+this is an invalid command
+
+
+echo 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+exit invalid
+exit
+koblensk> Command Line : /bin/ls -a
+   0 : /bin/ls
+   1 : -a
+  0 arg /bin/ls
+  1 arg -a
+/bin/ls
+/bin/ls
+koblensk> Command Line : cat batch.txt
+   0 : cat
+   1 : batch.txt
+  0 arg cat
+  1 arg batch.txt
+cat
+cat
+koblensk> Command Line : this is an invalid command
+   0 : this
+   1 : is
+   2 : an
+   3 : invalid
+   4 : command
+  0 arg this
+  1 arg is
+  2 arg an
+  3 arg invalid
+  4 arg command
+this
+this
+Doing execv this
+  0 this
+  1 is
+  2 an
+  3 invalid
+  4 command
+Doing execv /usr/bin/this
+  0 this
+  1 is
+  2 an
+  3 invalid
+  4 command
+Doing execv /bin/this
+  0 this
+  1 is
+  2 an
+  3 invalid
+  4 command
+
+Command Not Found.
+Please check your path and filename.
+Note: programs needing user input cannot be executed with this shell.
+
+koblensk> Command Line : /bin/ls -a
+   0 : /bin/ls
+   1 : -a
+  0 arg /bin/ls
+  1 arg -a
+/bin/ls
+/bin/ls
+koblensk> Command Line : cat batch.txt
+   0 : cat
+   1 : batch.txt
+  0 arg cat
+  1 arg batch.txt
+cat
+cat
+koblensk> Command Line : this is an invalid command
+   0 : this
+   1 : is
+   2 : an
+   3 : invalid
+   4 : command
+  0 arg this
+  1 arg is
+  2 arg an
+  3 arg invalid
+  4 arg command
+this
+this
+koblensk> Command Line : 
+koblensk> Command Line : 
+koblensk> Command Line : echo 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567
+Input exceeds valid command length.
+Input must be at most 512 characters.
+   0 : 
+901234567890
+
+  0 arg 
+901234567890
+
+
+901234567890
+
+
+901234567890
+
+Doing execv 
+901234567890
+
+  0 
+901234567890
+
+Doing execv /usr/bin/
+901234567890
+
+  0 
+901234567890
+
+Doing execv /bin/
+901234567890
+
+  0 
+901234567890
+
+
+Command Not Found.
+Please check your path and filename.
+Note: programs needing user input cannot be executed with this shell.
+
+koblensk> Command Line : /bin/ls -a
+   0 : /bin/ls
+   1 : -a
+  0 arg /bin/ls
+  1 arg -a
+/bin/ls
+/bin/ls
+koblensk> Command Line : cat batch.txt
+   0 : cat
+   1 : batch.txt
+  0 arg cat
+  1 arg batch.txt
+cat
+cat
+koblensk> Command Line : this is an invalid command
+   0 : this
+   1 : is
+   2 : an
+   3 : invalid
+   4 : command
+  0 arg this
+  1 arg is
+  2 arg an
+  3 arg invalid
+  4 arg command
+this
+this
+koblensk> Command Line : 
+koblensk> Command Line : 
+koblensk> Command Line : echo 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567
+Input exceeds valid command length.
+Input must be at most 512 characters.
+   0 : 
+901234567890
+
+  0 arg 
+901234567890
+
+
+901234567890
+
+
+901234567890
+
+koblensk> Command Line : exit invalid
+   0 : exit
+   1 : invalid
+  0 arg exit
+  1 arg invalid
+exit
+exit
+
+exit has too many arguments.
+Type "exit" or press Ctrl-D to exit.
+
+koblensk> Command Line : exit
+   0 : exit
+  0 arg exit
+exit
+exit
