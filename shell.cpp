@@ -29,61 +29,53 @@ void rstrip(char *str) {
   }
 }
 
-int main(int argc, char *argv[]) {
+FILE *get_input_source(int argc, const char *argv[]) {
+  if (argc == 1) {
+    return stdin;
+  } else if (argc == 2) {
+    FILE *inputSrc = fopen(argv[1], "r");
+    if (inputSrc == NULL) {
+      puts("\nFile not found.");
+      puts("Check your file name and path.\n");
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    puts("\nToo many arguments for shell command.");
+    puts("To run in batch mode use: shell <filename>.\n");
+    exit(EXIT_FAILURE);
+  }
+}
+
+void echo_command_from(const FILE *inputSrc, const char *command_line) {
+  if (inputSrc != stdin && getenv("VERBOSE") != NULL) {
+    printf("%s\n", command_line);
+  }
+}
+
+int main(int argc, const char *argv[]) {
   // variable initialization
   struct command_t *command; // Holds parsed command
   char *commandLine;         // Holds command before being parsed
-  char *shellPath;           // Holds SHELLPATH environment variable
   char *commandPath[1024];   // Holds the tokenized paths
   char *tempCmd;             // Holds a path to be cat with command and exec'd
   int LENGTH = 513;          // Maximum length of command
-  FILE *inputSrc = stdin;    // Changes to batch file name in batch mode
   char *checkEOF;            // Set to NULL if Ctrl-D is pressed
   int error = -1;            // Used to find valid path to command
-  bool echoLine = 0;         // If in batch mode and VERBOSE is set, echoLine=1
   bool execute = 1; // Set to false if command should no longer be executed
   static bool TRUE = 1;
   static char PROMPT[] = "koblensk> "; // Prompt to appear for user
 
   // Shell Initialization
 
-  // Checks whether to run in batch mode and echo commands
-  if (argc == 1) {
-
-  } else if (argc == 2) {
-    inputSrc = fopen(argv[1], "r");
-    if (inputSrc == NULL) {
-      puts("\nFile not found.");
-      puts("Check your file name and path.\n");
-      exit(0);
-    } // if
-    if (getenv("VERBOSE") != NULL) {
-      echoLine = 1;
-    } // if
-
-  } else {
-    puts("\nToo many arguments for shell command.");
-    puts("To run in batch mode use: shell <filename>.\n");
-    exit(0);
-  } // if - else if - else
-
-  // Get SHELLPATH
-  if (getenv("SHELLPATH") == NULL) {
-    shellPath = NULL;
-
-  } else {
-    shellPath =
-        (char *)malloc((strlen(getenv("SHELLPATH")) + 1) * sizeof(char));
-    strcpy(shellPath, getenv("SHELLPATH"));
-  } // else
+  FILE *inputSrc = get_input_source(argc, argv);
 
   // Find the full pathname for the file and execute command
   int pathCount = 0;
 
-  if (shellPath != NULL) {
+  if (getenv("SHELLPATH") != NULL) {
 
     commandPath[0] = (char *)malloc(LENGTH * sizeof(char));
-    char *pathTmp = strtok(shellPath, ":");
+    char *pathTmp = strtok(getenv("SHELLPATH"), ":");
     if (pathTmp) {
       strcpy(commandPath[0], pathTmp);
     } else {
@@ -134,9 +126,7 @@ int main(int argc, char *argv[]) {
       commandLine[0] = '\n';
     } // else if
 
-    if (echoLine) {
-      printf("%s\n", commandLine);
-    } // if
+    echo_command_from(inputSrc, commandLine);
 
     command = (command_t *)malloc(sizeof(command));
     if (command == NULL) {
