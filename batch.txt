@@ -1,4 +1,4 @@
-/bin/ls -a
+/bin/ls -a test
 cat batch.txt
 this is an invalid command
 
