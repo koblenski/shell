@@ -33,12 +33,13 @@ FILE *get_input_source(int argc, const char *argv[]) {
   if (argc == 1) {
     return stdin;
   } else if (argc == 2) {
-    FILE *inputSrc = fopen(argv[1], "r");
-    if (inputSrc == NULL) {
+    FILE *input_src = fopen(argv[1], "r");
+    if (input_src == NULL) {
       puts("\nFile not found.");
       puts("Check your file name and path.\n");
       exit(EXIT_FAILURE);
     }
+    return input_src;
   } else {
     puts("\nToo many arguments for shell command.");
     puts("To run in batch mode use: shell <filename>.\n");
@@ -46,8 +47,42 @@ FILE *get_input_source(int argc, const char *argv[]) {
   }
 }
 
-void echo_command_from(const FILE *inputSrc, const char *command_line) {
-  if (inputSrc != stdin && getenv("VERBOSE") != NULL) {
+int count_char(const char *str, char ch) {
+  int count = 0;
+  for (; *str; str++) {
+    if (*str == ch) count++;
+  }
+  return count;
+}
+
+char **parse_shell_path() {
+  char *shell_path = getenv("SHELLPATH");
+  if (shell_path == NULL) return NULL;
+
+  int path_count = count_char(shell_path, ':') + 1;
+  char **command_paths = (char **)malloc((path_count + 1) * sizeof(char *));
+  if (command_paths == NULL) {
+    puts("ERROR: Out of memory in parse_shell_path() allocating command_paths");
+    exit(EXIT_FAILURE);
+  }
+
+  int i = 0;
+  for (char *path = strtok(shell_path, ":"); path != NULL; path = strtok(NULL, ":"), i++) {
+    command_paths[i] = (char *)malloc(strlen(path) * sizeof(char));
+    if (command_paths[i] == NULL) {
+      printf("ERROR: Out of memory in parse_shell_path() allocating command_paths[%d]\n", i);
+      exit(EXIT_FAILURE);
+    }
+    strcpy(command_paths[i], path);
+  }
+
+  command_paths[i] = NULL;
+
+  return command_paths;
+}
+
+void echo_command_from(const FILE *input_src, const char *command_line) {
+  if (input_src != stdin && getenv("VERBOSE") != NULL) {
     printf("%s\n", command_line);
   }
 }
@@ -56,7 +91,6 @@ int main(int argc, const char *argv[]) {
   // variable initialization
   struct command_t *command; // Holds parsed command
   char *commandLine;         // Holds command before being parsed
-  char *commandPath[1024];   // Holds the tokenized paths
   char *tempCmd;             // Holds a path to be cat with command and exec'd
   int LENGTH = 513;          // Maximum length of command
   char *checkEOF;            // Set to NULL if Ctrl-D is pressed
@@ -65,41 +99,9 @@ int main(int argc, const char *argv[]) {
   static bool TRUE = 1;
   static char PROMPT[] = "koblensk> "; // Prompt to appear for user
 
-  // Shell Initialization
+  FILE *input_src = get_input_source(argc, argv);
 
-  FILE *inputSrc = get_input_source(argc, argv);
-
-  // Find the full pathname for the file and execute command
-  int pathCount = 0;
-
-  if (getenv("SHELLPATH") != NULL) {
-
-    commandPath[0] = (char *)malloc(LENGTH * sizeof(char));
-    char *pathTmp = strtok(getenv("SHELLPATH"), ":");
-    if (pathTmp) {
-      strcpy(commandPath[0], pathTmp);
-    } else {
-      commandPath[0] = NULL;
-      printf("OOPS\n");
-      exit(1);
-    }
-
-    while (commandPath[pathCount] != NULL) {
-      pathCount++;
-
-      char *sTmp = strtok(NULL, ":");
-      if (sTmp) {
-        commandPath[pathCount] = (char *)malloc(256 * sizeof(char));
-        strcpy(commandPath[pathCount], sTmp);
-      } else {
-        commandPath[pathCount] = NULL;
-      }
-    } // while
-
-    // temp = strlen(commandPath[pathCount-1]) - 1;
-    // commandPath[pathCount-1][temp] = '\0';
-    commandPath[pathCount] = NULL;
-  } // if
+  char **command_paths = parse_shell_path();
 
   // Main Loop
   while (TRUE) {
@@ -107,7 +109,7 @@ int main(int argc, const char *argv[]) {
 
     // Read the command line and check for errors
     commandLine = (char *)malloc(LENGTH * sizeof(char));
-    checkEOF = fgets(commandLine, LENGTH, inputSrc);
+    checkEOF = fgets(commandLine, LENGTH, input_src);
     printf("Command Line : %s", commandLine);
     rstrip(commandLine);
 
@@ -120,13 +122,13 @@ int main(int argc, const char *argv[]) {
     if (strlen(commandLine) >= (unsigned)LENGTH - 1) {
       puts("\nInput exceeds valid command length.");
       puts("Input must be at most 512 characters.");
-      while (strlen(fgets(commandLine, LENGTH, inputSrc)) >=
+      while (strlen(fgets(commandLine, LENGTH, input_src)) >=
              (unsigned)LENGTH - 1)
         ;
       commandLine[0] = '\n';
     } // else if
 
-    echo_command_from(inputSrc, commandLine);
+    echo_command_from(input_src, commandLine);
 
     command = (command_t *)malloc(sizeof(command));
     if (command == NULL) {
@@ -200,10 +202,10 @@ int main(int argc, const char *argv[]) {
           }
           execv(tempCmd, command->argv);
 
-          if (commandPath[i] != NULL) {
-            tempCmd = (char *)realloc(tempCmd, (strlen(commandPath[i]) + 1) *
+          if (command_paths[i] != NULL) {
+            tempCmd = (char *)realloc(tempCmd, (strlen(command_paths[i]) + 1) *
                                                    sizeof(char));
-            strcpy(tempCmd, commandPath[i]);
+            strcpy(tempCmd, command_paths[i]);
             strcat(tempCmd, "/");
             strcat(tempCmd, command->name);
             i++;
@@ -233,11 +235,7 @@ int main(int argc, const char *argv[]) {
 
     // free(command->argv);
 
-    for (int i = 0; i <= pathCount; i++) {
-      // free(commandPath[i]);
-    } // for
-
-    // free(commandPath);
+    // free(command_paths);
     // free(tempCmd);
   }
 }
