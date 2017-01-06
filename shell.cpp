@@ -6,6 +6,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#define PROMPT "koblensk> "
+#define MAX_COMMAND_LENGTH 513
+
 struct command_t {
   char name[1024];
   int argc;
@@ -81,6 +84,30 @@ char **parse_shell_path() {
   return command_paths;
 }
 
+char *get_command_line_from(FILE *input_src) {
+  char *command_line = (char *)malloc(MAX_COMMAND_LENGTH * sizeof(char));
+  char *checkEOF = fgets(command_line, MAX_COMMAND_LENGTH, input_src);
+  printf("Command Line : %s", command_line);
+  rstrip(command_line);
+
+  if (checkEOF == NULL) {
+    printf("\n");
+    exit(0);
+  }
+  if (is_empty(command_line))
+    return NULL;
+  if (strlen(command_line) >= (unsigned)MAX_COMMAND_LENGTH - 1) {
+    puts("\nInput exceeds valid command length.");
+    puts("Input must be at most 512 characters.");
+    while (strlen(fgets(command_line, MAX_COMMAND_LENGTH, input_src)) >=
+            (unsigned)MAX_COMMAND_LENGTH - 1)
+      ;
+    command_line[0] = '\n';
+  }
+
+  return command_line;
+}
+
 void echo_command_from(const FILE *input_src, const char *command_line) {
   if (input_src != stdin && getenv("VERBOSE") != NULL) {
     printf("%s\n", command_line);
@@ -90,45 +117,21 @@ void echo_command_from(const FILE *input_src, const char *command_line) {
 int main(int argc, const char *argv[]) {
   // variable initialization
   struct command_t *command; // Holds parsed command
-  char *commandLine;         // Holds command before being parsed
   char *tempCmd;             // Holds a path to be cat with command and exec'd
-  int LENGTH = 513;          // Maximum length of command
-  char *checkEOF;            // Set to NULL if Ctrl-D is pressed
   int error = -1;            // Used to find valid path to command
   bool execute = 1; // Set to false if command should no longer be executed
-  static bool TRUE = 1;
-  static char PROMPT[] = "koblensk> "; // Prompt to appear for user
 
   FILE *input_src = get_input_source(argc, argv);
 
   char **command_paths = parse_shell_path();
 
-  // Main Loop
-  while (TRUE) {
+  for (;;) {
     printf("%s", PROMPT);
 
-    // Read the command line and check for errors
-    commandLine = (char *)malloc(LENGTH * sizeof(char));
-    checkEOF = fgets(commandLine, LENGTH, input_src);
-    printf("Command Line : %s", commandLine);
-    rstrip(commandLine);
+    char *command_line = get_command_line_from(input_src);
+    if (command_line == NULL) continue;
 
-    if (checkEOF == NULL) {
-      printf("\n");
-      exit(0);
-    }
-    if (is_empty(commandLine))
-      continue;
-    if (strlen(commandLine) >= (unsigned)LENGTH - 1) {
-      puts("\nInput exceeds valid command length.");
-      puts("Input must be at most 512 characters.");
-      while (strlen(fgets(commandLine, LENGTH, input_src)) >=
-             (unsigned)LENGTH - 1)
-        ;
-      commandLine[0] = '\n';
-    } // else if
-
-    echo_command_from(input_src, commandLine);
+    echo_command_from(input_src, command_line);
 
     command = (command_t *)malloc(sizeof(command));
     if (command == NULL) {
@@ -139,15 +142,15 @@ int main(int argc, const char *argv[]) {
     // Parse the executable and arguments from the command
     command->argc = 0;
     ///    command->argv = (char **) malloc(3 * sizeof(char *));
-    command->argv[0] = (char *)malloc(LENGTH * sizeof(char));
-    strcpy(command->argv[0], strtok(commandLine, " "));
+    command->argv[0] = (char *)malloc(MAX_COMMAND_LENGTH * sizeof(char));
+    strcpy(command->argv[0], strtok(command_line, " "));
     printf("   0 : %s\n", command->argv[0]);
 
     char *sTmp = strtok(NULL, " ");
     int cnt = 1;
 
     while (sTmp) {
-      command->argv[cnt] = (char *)malloc((LENGTH * sizeof(char)));
+      command->argv[cnt] = (char *)malloc((MAX_COMMAND_LENGTH * sizeof(char)));
       strcpy(command->argv[cnt], sTmp);
 
       printf("   %d : %s\n", cnt, command->argv[cnt]);
@@ -225,6 +228,8 @@ int main(int argc, const char *argv[]) {
       } // else
 
     } // if
+
+    free(command_line);
 
     // free(shellPath);
     // free(command->name);
