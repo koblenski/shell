@@ -102,7 +102,7 @@ char *get_command_line_from(FILE *input_src) {
     while (strlen(fgets(command_line, MAX_COMMAND_LENGTH, input_src)) >=
             (unsigned)MAX_COMMAND_LENGTH - 1)
       ;
-    command_line[0] = '\n';
+    return NULL;
   }
 
   return command_line;
