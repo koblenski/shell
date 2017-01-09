@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #define PROMPT "koblensk> "
-#define MAX_COMMAND_LENGTH 513
+#define MAX_COMMAND_LENGTH 512
 
 struct command_t {
   char name[1024];
@@ -85,25 +85,23 @@ char **parse_shell_path() {
 }
 
 char *get_command_line_from(FILE *input_src) {
-  char *command_line = (char *)malloc(MAX_COMMAND_LENGTH * sizeof(char));
-  char *checkEOF = fgets(command_line, MAX_COMMAND_LENGTH, input_src);
-  printf("Command Line : %s", command_line);
-  rstrip(command_line);
-
-  if (checkEOF == NULL) {
+  char *command_line = (char *)malloc((MAX_COMMAND_LENGTH + 1) * sizeof(char));
+  if (fgets(command_line, (MAX_COMMAND_LENGTH + 1), input_src) == NULL) {
     printf("\n");
     exit(0);
   }
-  if (is_empty(command_line))
-    return NULL;
-  if (strlen(command_line) >= (unsigned)MAX_COMMAND_LENGTH - 1) {
+
+  printf("Command Line : %s", command_line);
+  if (strlen(command_line) >= (unsigned)MAX_COMMAND_LENGTH) {
     puts("\nInput exceeds valid command length.");
-    puts("Input must be at most 512 characters.");
-    while (strlen(fgets(command_line, MAX_COMMAND_LENGTH, input_src)) >=
-            (unsigned)MAX_COMMAND_LENGTH - 1)
-      ;
+    printf("Input must be at most %d characters.\n", MAX_COMMAND_LENGTH);
+    while (strlen(fgets(command_line, (MAX_COMMAND_LENGTH + 1), input_src)) >=
+            (unsigned)MAX_COMMAND_LENGTH) ;
     return NULL;
   }
+
+  rstrip(command_line);
+  if (is_empty(command_line)) return NULL;
 
   return command_line;
 }
