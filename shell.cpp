@@ -10,9 +10,8 @@
 #define MAX_COMMAND_LENGTH 512
 
 struct command_t {
-  char name[1024];
   int argc;
-  char *argv[1024];
+  char **argv;
 };
 
 bool is_empty(const char *str) {
@@ -88,7 +87,7 @@ char *get_command_line_from(FILE *input_src) {
   char *command_line = (char *)malloc((MAX_COMMAND_LENGTH + 1) * sizeof(char));
   if (fgets(command_line, (MAX_COMMAND_LENGTH + 1), input_src) == NULL) {
     printf("\n");
-    exit(0);
+    exit(EXIT_SUCCESS);
   }
 
   printf("Command Line : %s", command_line);
@@ -112,9 +111,40 @@ void echo_command_from(const FILE *input_src, const char *command_line) {
   }
 }
 
+struct command_t *parse_command_line(char *command_line) {
+  struct command_t *command = (command_t *)malloc(sizeof(command));
+  if (command == NULL) {
+    fprintf(stderr, "ERROR: Out of memory in parse_command_line() allocating command\n");
+    exit(EXIT_FAILURE);
+  }
+
+  command->argc = count_char(command_line, ' ') + 1;
+  command->argv = (char **)malloc((command->argc + 1) * sizeof(command->argv));
+  if (command->argv == NULL) {
+    fprintf(stderr, "ERROR: Out of memory in parse_command_line() allocating command->argv\n");
+    exit(EXIT_FAILURE);
+  }
+
+  int cnt = 0;
+  for (command->argv[cnt] = strtok(command_line, " ");
+       command->argv[cnt];
+       command->argv[cnt] = strtok(NULL, " ")) {
+    printf("   %d : %s\n", cnt, command->argv[cnt]);
+    cnt++;
+  }
+
+  for (cnt = 0; command->argv[cnt]; cnt++) {
+    printf("  %d arg %s\n", cnt, command->argv[cnt]);
+  }
+
+  printf("%s\n", command->argv[0]);
+  printf("%s\n", command->argv[0]);
+
+  return command;
+}
+
 int main(int argc, const char *argv[]) {
   // variable initialization
-  struct command_t *command; // Holds parsed command
   char *tempCmd;             // Holds a path to be cat with command and exec'd
   int error = -1;            // Used to find valid path to command
   bool execute = 1; // Set to false if command should no longer be executed
@@ -131,52 +161,9 @@ int main(int argc, const char *argv[]) {
 
     echo_command_from(input_src, command_line);
 
-    command = (command_t *)malloc(sizeof(command));
-    if (command == NULL) {
-      fprintf(stderr, "ran out of mem\n");
-      exit(1);
-    }
+    struct command_t *command = parse_command_line(command_line);
 
-    // Parse the executable and arguments from the command
-    command->argc = 0;
-    ///    command->argv = (char **) malloc(3 * sizeof(char *));
-    command->argv[0] = (char *)malloc(MAX_COMMAND_LENGTH * sizeof(char));
-    strcpy(command->argv[0], strtok(command_line, " "));
-    printf("   0 : %s\n", command->argv[0]);
-
-    char *sTmp = strtok(NULL, " ");
-    int cnt = 1;
-
-    while (sTmp) {
-      command->argv[cnt] = (char *)malloc((MAX_COMMAND_LENGTH * sizeof(char)));
-      strcpy(command->argv[cnt], sTmp);
-
-      printf("   %d : %s\n", cnt, command->argv[cnt]);
-
-      cnt++;
-
-      // do again.
-      sTmp = strtok(NULL, " ");
-
-    } // while
-
-    command->argc = cnt;
-    command->argv[cnt] = NULL;
-
-    cnt = 0;
-    while (command->argv[cnt]) {
-      printf("  %d arg %s\n", cnt, command->argv[cnt]);
-      cnt++;
-    }
-
-    // int temp = strlen(command->argv[command->argc-1])-1;
-    // command->argv[command->argc-1][temp] = '\0';
-    // command->argv[command->argc] = NULL;
-    printf("%s\n", command->argv[0]);
-    strcpy(command->name, command->argv[0]);
-    printf("%s\n", command->name);
-
-    if (!strcmp(command->name, "exit")) {
+    if (!strcmp(command->argv[0], "exit")) {
 
       if (command->argc == 1) {
         exit(0);
@@ -192,8 +179,8 @@ int main(int argc, const char *argv[]) {
       int pid, rc;
       rc = fork();
       if (rc == 0) {
-        tempCmd = (char *)malloc((strlen(command->name) + 1) * sizeof(char));
-        strcpy(tempCmd, command->name);
+        tempCmd = (char *)malloc((strlen(command->argv[0]) + 1) * sizeof(char));
+        strcpy(tempCmd, command->argv[0]);
         while (error == -1) {
           printf("Doing execv %s\n", tempCmd);
           int cnt = 0;
@@ -208,7 +195,7 @@ int main(int argc, const char *argv[]) {
                                                    sizeof(char));
             strcpy(tempCmd, command_paths[i]);
             strcat(tempCmd, "/");
-            strcat(tempCmd, command->name);
+            strcat(tempCmd, command->argv[0]);
             i++;
 
           } else {
@@ -228,17 +215,7 @@ int main(int argc, const char *argv[]) {
     } // if
 
     free(command_line);
-
-    // free(shellPath);
-    // free(command->name);
-
-    for (int i = 0; i <= command->argc; i++) {
-      // free(command->argv[command->argc]);
-    } // for
-
-    // free(command->argv);
-
-    // free(command_paths);
-    // free(tempCmd);
+    free(command->argv);
+    free(command);
   }
 }
