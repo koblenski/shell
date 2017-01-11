@@ -61,7 +61,14 @@ char **parse_shell_path() {
   char *shell_path = getenv("SHELLPATH");
   if (shell_path == NULL) return NULL;
 
-  int path_count = count_char(shell_path, ':') + 1;
+  char *shell_path_dup = (char *)malloc((strlen(shell_path) + 1) * sizeof(char));
+  if (shell_path_dup == NULL) {
+    puts("ERROR: Out of memory in parse_shell_path() allocating shell_path_dup");
+    exit(EXIT_FAILURE);
+  }
+  strcpy(shell_path_dup, shell_path);
+
+  int path_count = count_char(shell_path_dup, ':') + 1;
   char **command_paths = (char **)malloc((path_count + 1) * sizeof(char *));
   if (command_paths == NULL) {
     puts("ERROR: Out of memory in parse_shell_path() allocating command_paths");
@@ -69,16 +76,11 @@ char **parse_shell_path() {
   }
 
   int i = 0;
-  for (char *path = strtok(shell_path, ":"); path != NULL; path = strtok(NULL, ":"), i++) {
-    command_paths[i] = (char *)malloc(strlen(path) * sizeof(char));
-    if (command_paths[i] == NULL) {
-      printf("ERROR: Out of memory in parse_shell_path() allocating command_paths[%d]\n", i);
-      exit(EXIT_FAILURE);
-    }
-    strcpy(command_paths[i], path);
+  for (command_paths[i] = strtok(shell_path_dup, ":");
+       command_paths[i] != NULL;
+       command_paths[i] = strtok(NULL, ":")) {
+    i++;
   }
-
-  command_paths[i] = NULL;
 
   return command_paths;
 }
