@@ -57,6 +57,23 @@ int count_char(const char *str, char ch) {
   return count;
 }
 
+char **tokenize(char *str, const char *delim, int count) {
+  char **tokens = (char **)malloc((count + 1) * sizeof(char *));
+  if (tokens == NULL) {
+    puts("ERROR: Out of memory in tokenize() allocating tokens");
+    exit(EXIT_FAILURE);
+  }
+
+  int i = 0;
+  for (tokens[i] = strtok(str, delim);
+       tokens[i] != NULL;
+       tokens[i] = strtok(NULL, delim)) {
+    i++;
+  }
+
+  return tokens;
+}
+
 char **parse_shell_path() {
   char *shell_path = getenv("SHELLPATH");
   if (shell_path == NULL) return NULL;
@@ -69,20 +86,7 @@ char **parse_shell_path() {
   strcpy(shell_path_dup, shell_path);
 
   int path_count = count_char(shell_path_dup, ':') + 1;
-  char **command_paths = (char **)malloc((path_count + 1) * sizeof(char *));
-  if (command_paths == NULL) {
-    puts("ERROR: Out of memory in parse_shell_path() allocating command_paths");
-    exit(EXIT_FAILURE);
-  }
-
-  int i = 0;
-  for (command_paths[i] = strtok(shell_path_dup, ":");
-       command_paths[i] != NULL;
-       command_paths[i] = strtok(NULL, ":")) {
-    i++;
-  }
-
-  return command_paths;
+  return tokenize(shell_path_dup, ":", path_count);
 }
 
 char *get_command_line_from(FILE *input_src) {
@@ -120,19 +124,7 @@ struct command_t *parse_command_line(char *command_line) {
   }
 
   command->argc = count_char(command_line, ' ') + 1;
-  command->argv = (char **)malloc((command->argc + 1) * sizeof(command->argv));
-  if (command->argv == NULL) {
-    fprintf(stderr, "ERROR: Out of memory in parse_command_line() allocating command->argv\n");
-    exit(EXIT_FAILURE);
-  }
-
-  int cnt = 0;
-  for (command->argv[cnt] = strtok(command_line, " ");
-       command->argv[cnt];
-       command->argv[cnt] = strtok(NULL, " ")) {
-    cnt++;
-  }
-
+  command->argv = tokenize(command_line, " ", command->argc);
   return command;
 }
 
