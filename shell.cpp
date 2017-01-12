@@ -145,14 +145,40 @@ struct command_t *parse_command_line(char *command_line) {
   return command;
 }
 
+void execute_command(struct command_t *command, char **command_paths) {
+  int rc = fork();
+  if (rc == 0) {
+    int command_length = strlen(command->argv[0]);
+    char *full_command = (char *)malloc((command_length + 1) * sizeof(char));
+    strcpy(full_command, command->argv[0]);
+
+    for (int i = 0; ; i++) {
+      printf("Doing execv %s\n", full_command);
+      int cnt = 0;
+      while (command->argv[cnt]) {
+        printf("  %d %s\n", cnt, command->argv[cnt]);
+        cnt++;
+      }
+      execv(full_command, command->argv);
+
+      if (command_paths[i] != NULL) {
+        int command_path_length = strlen(command_paths[i]) + command_length + 2;
+        full_command = (char *)realloc(full_command, command_path_length * sizeof(char));
+        sprintf(full_command, "%s/%s", command_paths[i], command->argv[0]);
+      } else {
+        puts("\nCommand Not Found.");
+        puts("Please check your path and filename.");
+        puts("Note: programs needing user input cannot be executed with this shell.\n");
+        exit(EXIT_SUCCESS);
+      }
+    }
+  } else {
+    int pid = wait(&rc);
+  }
+}
+
 int main(int argc, const char *argv[]) {
-  // variable initialization
-  char *tempCmd;             // Holds a path to be cat with command and exec'd
-  int error = -1;            // Used to find valid path to command
-  bool execute = 1; // Set to false if command should no longer be executed
-
   FILE *input_src = get_input_source(argc, argv);
-
   char **command_paths = parse_shell_path();
 
   for (;;) {
@@ -160,61 +186,20 @@ int main(int argc, const char *argv[]) {
 
     char *command_line = get_command_line_from(input_src);
     if (command_line == NULL) continue;
-
     echo_command_from(input_src, command_line);
 
     struct command_t *command = parse_command_line(command_line);
 
-    if (!strcmp(command->argv[0], "exit")) {
-
+    if (strcmp(command->argv[0], "exit") == 0) {
       if (command->argc == 1) {
-        exit(0);
+        exit(EXIT_SUCCESS);
       } else {
         puts("\nexit has too many arguments.");
         puts("Type \"exit\" or press Ctrl-D to exit.\n");
-        execute = 0;
-      } // else
-    }   // if
-
-    if (execute) {
-      int i = 0;
-      int pid, rc;
-      rc = fork();
-      if (rc == 0) {
-        tempCmd = (char *)malloc((strlen(command->argv[0]) + 1) * sizeof(char));
-        strcpy(tempCmd, command->argv[0]);
-        while (error == -1) {
-          printf("Doing execv %s\n", tempCmd);
-          int cnt = 0;
-          while (command->argv[cnt]) {
-            printf("  %d %s\n", cnt, command->argv[cnt]);
-            cnt++;
-          }
-          execv(tempCmd, command->argv);
-
-          if (command_paths[i] != NULL) {
-            tempCmd = (char *)realloc(tempCmd, (strlen(command_paths[i]) + 1) *
-                                                   sizeof(char));
-            strcpy(tempCmd, command_paths[i]);
-            strcat(tempCmd, "/");
-            strcat(tempCmd, command->argv[0]);
-            i++;
-
-          } else {
-            puts("\nCommand Not Found.");
-            puts("Please check your path and filename.");
-            puts("Note: programs needing user input cannot be executed with "
-                 "this shell.\n");
-            exit(0);
-          } // else
-
-        } // while
-
-      } else {
-        pid = wait(&rc);
-      } // else
-
-    } // if
+      }
+    } else {
+      execute_command(command, command_paths);
+    }
 
     free(command_line);
     free(command->argv);
