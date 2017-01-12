@@ -92,7 +92,6 @@ char *get_command_line_from(FILE *input_src) {
     exit(EXIT_SUCCESS);
   }
 
-  printf("Command Line : %s", command_line);
   if (strlen(command_line) >= (unsigned)MAX_COMMAND_LENGTH) {
     puts("\nInput exceeds valid command length.");
     printf("Input must be at most %d characters.\n", MAX_COMMAND_LENGTH);
@@ -131,16 +130,8 @@ struct command_t *parse_command_line(char *command_line) {
   for (command->argv[cnt] = strtok(command_line, " ");
        command->argv[cnt];
        command->argv[cnt] = strtok(NULL, " ")) {
-    printf("   %d : %s\n", cnt, command->argv[cnt]);
     cnt++;
   }
-
-  for (cnt = 0; command->argv[cnt]; cnt++) {
-    printf("  %d arg %s\n", cnt, command->argv[cnt]);
-  }
-
-  printf("%s\n", command->argv[0]);
-  printf("%s\n", command->argv[0]);
 
   return command;
 }
@@ -153,12 +144,6 @@ void execute_command(struct command_t *command, char **command_paths) {
     strcpy(full_command, command->argv[0]);
 
     for (int i = 0; ; i++) {
-      printf("Doing execv %s\n", full_command);
-      int cnt = 0;
-      while (command->argv[cnt]) {
-        printf("  %d %s\n", cnt, command->argv[cnt]);
-        cnt++;
-      }
       execv(full_command, command->argv);
 
       if (command_paths[i] != NULL) {
@@ -198,6 +183,7 @@ int main(int argc, const char *argv[]) {
         puts("Type \"exit\" or press Ctrl-D to exit.\n");
       }
     } else {
+      fflush(stdout);
       execute_command(command, command_paths);
     }
 
